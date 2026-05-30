@@ -54,7 +54,7 @@ Flask
 1. 克隆仓库：
 
 ```bash
-git clone [https://github.com/你的用户名/CA-Lab2.git](https://github.com/KashuuFreud/CA-Lab2.git)
+git clone https://github.com/KashuuFreud/CA-Lab2.git
 cd CA-Lab2
 ```
 
