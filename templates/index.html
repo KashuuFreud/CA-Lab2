@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pipeline Visualizer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">pipeline_visual.</div>
+
+        <nav class="nav">
+            <a class="active" href="#" data-page="simulatorPage">SIMULATOR</a>
+            <a href="#" data-page="analysisPage">ANALYSIS</a>
+            <a href="#" data-page="reportPage">REPORT</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page active-page" id="simulatorPage">
+            <section class="hero">
+                <div class="hero-text">
+                    <h1>MIPS Pipeline<br>Visualizer for<br>Hazard Analysis</h1>
+
+                    <div class="intro-line">
+                        <span class="dash"></span>
+                        <p>
+                            Import an ASM file, then explore a simplified five-stage pipeline with
+                            cycle-by-cycle execution, RAW hazard detection, branch flush and forwarding control.
+                        </p>
+                    </div>
+
+                    <div class="control-panel">
+                        <input type="file" id="asmFileInput" accept=".asm,.s,.txt">
+
+                        <label class="switch">
+                            <input type="checkbox" id="forwardingSwitch">
+                            <span class="slider"></span>
+                            <span class="switch-label">Forwarding</span>
+                        </label>
+
+                        <button id="loadBtn">Load</button>
+                        <button id="stepBtn">Step</button>
+                        <button id="runBtn">Run</button>
+                        <button id="resetBtn" class="light-btn">Reset</button>
+                    </div>
+                </div>
+
+                <div class="hero-ghost">
+                    IF<br>ID<br>EX
+                </div>
+            </section>
+
+            <section class="status-strip">
+                <div>
+                    <span class="small-label">Program</span>
+                    <strong id="programName">imported.asm</strong>
+                </div>
+
+                <div>
+                    <span class="small-label">Cycle</span>
+                    <strong id="cycleValue">0</strong>
+                </div>
+
+                <div>
+                    <span class="small-label">PC</span>
+                    <strong id="pcValue">0</strong>
+                </div>
+
+                <div>
+                    <span class="small-label">Mode</span>
+                    <strong id="forwardingValue">OFF</strong>
+                </div>
+
+                <div>
+                    <span class="small-label">Event</span>
+                    <strong id="eventValue">Ready.</strong>
+                </div>
+            </section>
+
+            <section class="pipeline-section">
+                <div class="section-heading">
+                    <h2>Five Stage Pipeline</h2>
+                    <p>IF / ID / EX / MEM / WB</p>
+                </div>
+
+                <div class="pipeline-grid">
+                    <div class="stage-card" id="stage-IF">
+                        <span class="stage-name">IF</span>
+                        <p class="stage-title">Instruction Fetch</p>
+                        <strong class="stage-instr" id="IF-text">—</strong>
+                    </div>
+
+                    <div class="stage-card" id="stage-ID">
+                        <span class="stage-name">ID</span>
+                        <p class="stage-title">Instruction Decode</p>
+                        <strong class="stage-instr" id="ID-text">—</strong>
+                    </div>
+
+                    <div class="stage-card" id="stage-EX">
+                        <span class="stage-name">EX</span>
+                        <p class="stage-title">Execute</p>
+                        <strong class="stage-instr" id="EX-text">—</strong>
+                    </div>
+
+                    <div class="stage-card" id="stage-MEM">
+                        <span class="stage-name">MEM</span>
+                        <p class="stage-title">Memory Access</p>
+                        <strong class="stage-instr" id="MEM-text">—</strong>
+                    </div>
+
+                    <div class="stage-card" id="stage-WB">
+                        <span class="stage-name">WB</span>
+                        <p class="stage-title">Write Back</p>
+                        <strong class="stage-instr" id="WB-text">—</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="data-section">
+                <div class="data-card">
+                    <div class="section-heading mini">
+                        <h2>Source</h2>
+                        <p>imported assembly program</p>
+                    </div>
+
+                    <textarea class="source-box" id="programEditor" spellcheck="false"># Click Choose File to import an ASM program.
+# You may also paste or edit code here directly.
+# Supported instructions: add, addi, lw, sw, beqz, halt.
+halt</textarea>
+                </div>
+
+                <div class="data-card">
+                    <div class="section-heading mini">
+                        <h2>Registers</h2>
+                        <p>r0 - r7</p>
+                    </div>
+
+                    <div class="table-like" id="registerView"></div>
+                </div>
+
+                <div class="data-card">
+                    <div class="section-heading mini">
+                        <h2>Memory</h2>
+                        <p>selected addresses</p>
+                    </div>
+
+                    <div class="table-like" id="memoryView"></div>
+                </div>
+
+                <div class="data-card">
+                    <div class="section-heading mini">
+                        <h2>Statistics</h2>
+                        <p>performance summary</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div>
+                            <span>Cycles</span>
+                            <strong id="statCycles">0</strong>
+                        </div>
+                        <div>
+                            <span>Instructions</span>
+                            <strong id="statInstructions">0</strong>
+                        </div>
+                        <div>
+                            <span>Stalls</span>
+                            <strong id="statStalls">0</strong>
+                        </div>
+                        <div>
+                            <span>Flushes</span>
+                            <strong id="statFlushes">0</strong>
+                        </div>
+                        <div>
+                            <span>CPI</span>
+                            <strong id="statCpi">0.000</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <section class="page" id="analysisPage">
+            <section class="analysis-hero">
+                <div>
+                    <h1>Performance<br>Comparison</h1>
+                    <p>
+                        Compare the currently imported ASM program with forwarding disabled and enabled.
+                    </p>
+                </div>
+
+                <div class="analysis-controls">
+                    <button id="compareBtn">Run Comparison</button>
+                </div>
+            </section>
+
+            <section class="comparison-section">
+                <div class="section-heading">
+                    <h2>Forwarding OFF / ON</h2>
+                    <p>automatic comparison</p>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="comparison-card">
+                        <span class="small-label">Mode</span>
+                        <h3>Forwarding OFF</h3>
+                        <div class="table-like" id="offStats"></div>
+                    </div>
+
+                    <div class="comparison-card highlight">
+                        <span class="small-label">Mode</span>
+                        <h3>Forwarding ON</h3>
+                        <div class="table-like" id="onStats"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="chart-section">
+                <div class="section-heading">
+                    <h2>Mini Charts</h2>
+                    <p>cycles / stalls / cpi</p>
+                </div>
+
+                <div id="chartView" class="chart-view">
+                    <p class="placeholder">Run comparison to generate charts.</p>
+                </div>
+            </section>
+
+            <section class="analysis-text-section">
+                <div class="section-heading">
+                    <h2>Auto Analysis</h2>
+                    <p>generated explanation</p>
+                </div>
+
+                <div class="analysis-text" id="analysisText">
+                    Import a program and run comparison.
+                </div>
+            </section>
+        </section>
+
+        <section class="page" id="reportPage">
+            <section class="analysis-hero">
+                <div>
+                    <h1>Report<br>Notes</h1>
+                    <p>
+                        Generate reusable experiment notes, statistics summary and screenshot checklist for the imported program.
+                    </p>
+                </div>
+
+                <div class="analysis-controls">
+                    <label class="switch bordered-switch">
+                        <input type="checkbox" id="reportForwardingSwitch">
+                        <span class="slider"></span>
+                        <span class="switch-label">Forwarding</span>
+                    </label>
+
+                    <button id="reportBtn">Generate Report Notes</button>
+                </div>
+            </section>
+
+            <section class="report-grid">
+                <div class="report-card large">
+                    <div class="section-heading mini">
+                        <h2>Generated Notes</h2>
+                        <p>copy into report</p>
+                    </div>
+
+                    <pre class="report-output" id="reportOutput">Generate report notes to view content.</pre>
+                </div>
+
+                <div class="report-card">
+                    <div class="section-heading mini">
+                        <h2>Screenshot List</h2>
+                        <p>recommended evidence</p>
+                    </div>
+
+                    <ol class="checklist" id="screenshotChecklist">
+                        <li>Generate report notes to view checklist.</li>
+                    </ol>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <footer>
+        <p>MIPS five-stage pipeline simulator · Python Flask + HTML CSS JavaScript</p>
+    </footer>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>
