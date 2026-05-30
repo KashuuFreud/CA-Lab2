@@ -77,12 +77,6 @@ source .venv/bin/activate
 3. 安装依赖：
 
 ```bash
-pip install -r requirements.txt
-```
-
-如果没有 `requirements.txt`，也可以直接安装：
-
-```bash
 pip install flask
 ```
 
